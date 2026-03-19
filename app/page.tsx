@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { 
-  Flame, 
-  Shield, 
-  MapPin, 
-  Bell, 
-  BarChart3, 
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  Flame,
+  Shield,
+  MapPin,
+  Bell,
+  BarChart3,
   Users,
   ArrowRight,
   CheckCircle2,
   Leaf,
-  Globe
-} from "lucide-react"
+  Globe,
+} from "lucide-react";
 
 export default function LandingPage() {
   return (
@@ -27,17 +27,28 @@ export default function LandingPage() {
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
               <Flame className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-semibold text-foreground">FireWatch</span>
+            <span className="text-xl font-semibold text-foreground">
+              FireWatch
+            </span>
           </Link>
-          
+
           <nav className="hidden items-center gap-6 md:flex">
-            <Link href="#recursos" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <Link
+              href="#recursos"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               Recursos
             </Link>
-            <Link href="#como-funciona" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <Link
+              href="#como-funciona"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               Como Funciona
             </Link>
-            <Link href="#contato" className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+            <Link
+              href="#contato"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
               Contato
             </Link>
           </nav>
@@ -50,9 +61,7 @@ export default function LandingPage() {
               </Button>
             </Link>
             <Link href="/login?tab=register">
-              <Button size="sm">
-                Começar Agora
-              </Button>
+              <Button size="sm">Começar Agora</Button>
             </Link>
           </div>
         </div>
@@ -72,9 +81,9 @@ export default function LandingPage() {
               <span className="text-primary">Incêndios Florestais</span>
             </h1>
             <p className="mx-auto mb-10 max-w-2xl text-pretty text-lg text-muted-foreground md:text-xl">
-              Sistema avançado de detecção precoce que combina sensores IoT, 
-              inteligência artificial e dados meteorológicos para proteger 
-              áreas de preservação ambiental.
+              Sistema avançado de detecção precoce que combina sensores IoT,
+              inteligência artificial e dados meteorológicos para proteger áreas
+              de preservação ambiental.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link href="/login?tab=register">
@@ -89,25 +98,6 @@ export default function LandingPage() {
                 </Button>
               </Link>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="border-y border-border bg-secondary/30 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {[
-              { value: "98%", label: "Precisão na Detecção" },
-              { value: "< 5min", label: "Tempo de Alerta" },
-              { value: "500+", label: "Áreas Monitoradas" },
-              { value: "24/7", label: "Monitoramento Ativo" },
-            ].map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-3xl font-bold text-primary md:text-4xl">{stat.value}</div>
-                <div className="mt-1 text-sm text-muted-foreground">{stat.label}</div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
@@ -129,41 +119,54 @@ export default function LandingPage() {
               {
                 icon: MapPin,
                 title: "Mapa Tático em Tempo Real",
-                description: "Visualização geográfica completa com pontos de calor, sensores ativos e histórico de ocorrências.",
+                description:
+                  "Visualização geográfica completa com pontos de calor, sensores ativos e histórico de ocorrências.",
               },
               {
                 icon: Bell,
                 title: "Sistema de Alertas Inteligente",
-                description: "Notificações instantâneas por SMS, e-mail e push com níveis de criticidade personalizáveis.",
+                description:
+                  "Notificações instantâneas por SMS, e-mail e push com níveis de criticidade personalizáveis.",
               },
               {
                 icon: BarChart3,
                 title: "Dashboard Analítico",
-                description: "Painéis interativos com métricas, tendências e relatórios detalhados de monitoramento.",
+                description:
+                  "Painéis interativos com métricas, tendências e relatórios detalhados de monitoramento.",
               },
               {
                 icon: Shield,
                 title: "Detecção por IA",
-                description: "Algoritmos de machine learning que analisam padrões térmicos e identificam riscos antecipadamente.",
+                description:
+                  "Algoritmos de machine learning que analisam padrões térmicos e identificam riscos antecipadamente.",
               },
               {
                 icon: Users,
                 title: "Gestão de Equipes",
-                description: "Coordenação de brigadas de incêndio com comunicação integrada e rastreamento GPS.",
+                description:
+                  "Coordenação de brigadas de incêndio com comunicação integrada e rastreamento GPS.",
               },
               {
                 icon: Globe,
                 title: "Integração Meteorológica",
-                description: "Dados climáticos em tempo real para previsão de risco e planejamento preventivo.",
+                description:
+                  "Dados climáticos em tempo real para previsão de risco e planejamento preventivo.",
               },
             ].map((feature, index) => (
-              <Card key={index} className="border-border/50 bg-card/50 transition-all hover:border-primary/30 hover:shadow-md">
+              <Card
+                key={index}
+                className="border-border/50 bg-card/50 transition-all hover:border-primary/30 hover:shadow-md"
+              >
                 <CardContent className="p-6">
                   <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
                     <feature.icon className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="mb-2 text-lg font-semibold text-foreground">{feature.title}</h3>
-                  <p className="text-sm text-muted-foreground">{feature.description}</p>
+                  <h3 className="mb-2 text-lg font-semibold text-foreground">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -172,7 +175,10 @@ export default function LandingPage() {
       </section>
 
       {/* How it Works */}
-      <section id="como-funciona" className="border-y border-border bg-secondary/30 py-20">
+      <section
+        id="como-funciona"
+        className="border-y border-border bg-secondary/30 py-20"
+      >
         <div className="container mx-auto px-4">
           <div className="mx-auto mb-16 max-w-2xl text-center">
             <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
@@ -188,25 +194,32 @@ export default function LandingPage() {
               {
                 step: "01",
                 title: "Instalação de Sensores",
-                description: "Dispositivos IoT são instalados estrategicamente nas áreas de monitoramento.",
+                description:
+                  "Dispositivos IoT são instalados estrategicamente nas áreas de monitoramento.",
               },
               {
                 step: "02",
                 title: "Coleta de Dados",
-                description: "Sensores captam temperatura, umidade, gases e imagens térmicas continuamente.",
+                description:
+                  "Sensores captam temperatura, umidade, gases e imagens térmicas continuamente.",
               },
               {
                 step: "03",
                 title: "Análise e Alertas",
-                description: "IA processa os dados e emite alertas automáticos para a central e equipes de campo.",
+                description:
+                  "IA processa os dados e emite alertas automáticos para a central e equipes de campo.",
               },
             ].map((item, index) => (
               <div key={index} className="relative text-center">
                 <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
                   {item.step}
                 </div>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">{item.title}</h3>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+                <h3 className="mb-2 text-lg font-semibold text-foreground">
+                  {item.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {item.description}
+                </p>
               </div>
             ))}
           </div>
@@ -222,20 +235,21 @@ export default function LandingPage() {
                 Pronto para proteger suas áreas florestais?
               </h2>
               <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-                Junte-se a centenas de organizações que já confiam no FireWatch 
+                Junte-se a centenas de organizações que já confiam no FireWatch
                 para monitoramento e prevenção de incêndios.
               </p>
               <div className="mb-8 flex flex-wrap items-center justify-center gap-4">
-                {[
-                  "Implantação rápida",
-                  "Suporte 24/7",
-                  "Sem compromisso",
-                ].map((item, index) => (
-                  <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <span>{item}</span>
-                  </div>
-                ))}
+                {["Implantação rápida", "Suporte 24/7", "Sem compromisso"].map(
+                  (item, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 text-sm text-muted-foreground"
+                    >
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <span>{item}</span>
+                    </div>
+                  ),
+                )}
               </div>
               <Link href="/login?tab=register">
                 <Button size="lg" className="gap-2">
@@ -249,7 +263,10 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer id="contato" className="border-t border-border bg-secondary/30 py-12">
+      <footer
+        id="contato"
+        className="border-t border-border bg-secondary/30 py-12"
+      >
         <div className="container mx-auto px-4">
           <div className="grid gap-8 md:grid-cols-4">
             <div className="md:col-span-2">
@@ -257,19 +274,33 @@ export default function LandingPage() {
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                   <Flame className="h-5 w-5 text-primary-foreground" />
                 </div>
-                <span className="text-xl font-semibold text-foreground">FireWatch</span>
+                <span className="text-xl font-semibold text-foreground">
+                  FireWatch
+                </span>
               </Link>
               <p className="max-w-sm text-sm text-muted-foreground">
-                Sistema de monitoramento e detecção precoce de incêndios florestais, 
-                protegendo o meio ambiente com tecnologia avançada.
+                Sistema de monitoramento e detecção precoce de incêndios
+                florestais, protegendo o meio ambiente com tecnologia avançada.
               </p>
             </div>
             <div>
               <h4 className="mb-4 font-semibold text-foreground">Produto</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="#recursos" className="hover:text-foreground">Recursos</Link></li>
-                <li><Link href="#como-funciona" className="hover:text-foreground">Como Funciona</Link></li>
-                <li><Link href="/login" className="hover:text-foreground">Acessar Sistema</Link></li>
+                <li>
+                  <Link href="#recursos" className="hover:text-foreground">
+                    Recursos
+                  </Link>
+                </li>
+                <li>
+                  <Link href="#como-funciona" className="hover:text-foreground">
+                    Como Funciona
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/login" className="hover:text-foreground">
+                    Acessar Sistema
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
@@ -287,5 +318,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
