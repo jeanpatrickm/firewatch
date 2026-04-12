@@ -28,6 +28,18 @@ export default function MapaTaticoPage() {
   const [stats, setStats] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
+  // Configurar ícones do Leaflet no cliente
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const L = require("leaflet")
+      L.Icon.Default.mergeOptions({
+        iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+        iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+        shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+      })
+    }
+  }, [])
+
   useEffect(() => {
     async function loadAllData() {
       try {
@@ -139,20 +151,26 @@ export default function MapaTaticoPage() {
             </CardHeader>
             <CardContent>
               <div className="h-[400px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                    <XAxis dataKey="mes" />
-                    <YAxis />
-                    <Tooltip 
-                      contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
-                      cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
-                    />
-                    <Legend />
-                    <Bar dataKey="focos" fill="hsl(var(--destructive))" name="Focos Detectados" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="media" fill="hsl(var(--primary))" name="Média Histórica" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
+                {stats.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={stats}>
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+                      <XAxis dataKey="mes" />
+                      <YAxis />
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }}
+                        cursor={{ fill: 'hsl(var(--muted)/0.2)' }}
+                      />
+                      <Legend />
+                      <Bar dataKey="focos" fill="hsl(var(--destructive))" name="Focos Detectados" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="media" fill="hsl(var(--primary))" name="Média Histórica" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground">
+                    Nenhum dado disponível
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
