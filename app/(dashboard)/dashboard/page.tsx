@@ -1,101 +1,114 @@
 "use client"
 
+import { useState, useEffect, useMemo } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { fetchFireData } from "@/lib/fire-service"
 import { 
-  Flame, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Activity,
-  Thermometer,
-  Droplets,
-  Wind,
-  MapPin
+  Flame, AlertTriangle, CheckCircle2, Activity,
+  Thermometer, Droplets, Wind, MapPin
 } from "lucide-react"
 import { 
-  Area, 
-  AreaChart, 
-  Bar, 
-  BarChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip,
-  CartesianGrid
+  Area, AreaChart, Bar, BarChart, ResponsiveContainer, 
+  XAxis, YAxis, Tooltip, CartesianGrid
 } from "recharts"
 
-// Dados simulados
-const alertsData = [
-  { hora: "00:00", alertas: 2 },
-  { hora: "04:00", alertas: 1 },
-  { hora: "08:00", alertas: 5 },
-  { hora: "12:00", alertas: 8 },
-  { hora: "16:00", alertas: 12 },
-  { hora: "20:00", alertas: 6 },
-]
-
-const weeklyData = [
-  { dia: "Seg", ocorrencias: 3, prevenidos: 12 },
-  { dia: "Ter", ocorrencias: 2, prevenidos: 15 },
-  { dia: "Qua", ocorrencias: 5, prevenidos: 18 },
-  { dia: "Qui", ocorrencias: 1, prevenidos: 20 },
-  { dia: "Sex", ocorrencias: 4, prevenidos: 16 },
-  { dia: "Sáb", ocorrencias: 2, prevenidos: 14 },
-  { dia: "Dom", ocorrencias: 1, prevenidos: 10 },
-]
-
-const recentAlerts = [
-  { id: 1, location: "Setor A - Zona Norte", severity: "high", time: "5 min atrás", status: "active" },
-  { id: 2, location: "Setor C - Zona Sul", severity: "medium", time: "15 min atrás", status: "investigating" },
-  { id: 3, location: "Setor B - Zona Leste", severity: "low", time: "1 hora atrás", status: "resolved" },
-  { id: 4, location: "Setor D - Zona Oeste", severity: "medium", time: "2 horas atrás", status: "resolved" },
-]
-
-const stats = [
-  {
-    title: "Alertas Ativos",
-    value: "3",
-    change: "+2 desde ontem",
-    icon: AlertTriangle,
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
-  {
-    title: "Áreas Monitoradas",
-    value: "24",
-    change: "Todas operacionais",
-    icon: MapPin,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    title: "Incêndios Prevenidos",
-    value: "156",
-    change: "+12 este mês",
-    icon: CheckCircle2,
-    color: "text-success",
-    bgColor: "bg-success/10",
-  },
-  {
-    title: "Sensores Online",
-    value: "98%",
-    change: "486 de 496",
-    icon: Activity,
-    color: "text-chart-3",
-    bgColor: "bg-chart-3/10",
-  },
-]
-
-const weatherData = [
-  { label: "Temperatura", value: "32°C", icon: Thermometer, color: "text-chart-4" },
-  { label: "Umidade", value: "45%", icon: Droplets, color: "text-chart-3" },
-  { label: "Vento", value: "18 km/h", icon: Wind, color: "text-chart-5" },
-]
-
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true)
+  const [fireData, setFireData] = useState<any>({ nasa: [], inpe: [] })
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        setLoading(true)
+        const data = await fetchFireData()
+        setFireData(data)
+      } catch (err) {
+        console.error("Erro ao carregar dados das APIs:", err)
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadData()
+  }, [])
+
+  const nasaAlerts = Array.isArray(fireData.nasa) ? fireData.nasa : []
+
+  // PARSEAMENTO: Transforma dados brutos da NASA para o Gráfico de Área (Alertas por hora)
+  const chartData = useMemo(() => {
+    const hours = Array.from({ length: 6 }, (_, i) => `${String(i * 4).padStart(2, '0')}:00`)
+    return hours.map(h => ({
+      hora: h,
+      alertas: nasaAlerts.filter((f: any) => String(f.acq_time ?? '').startsWith(h.slice(0, 2))).length
+    }))
+  }, [nasaAlerts])
+
+  // PARSEAMENTO: Alertas Recentes baseados nos últimos focos detectados
+  const recentAlerts = useMemo(() => {
+    return nasaAlerts.slice(0, 4).map((f: any, i: number) => ({
+      id: i,
+      location: `Lat: ${f.latitude}, Lon: ${f.longitude}`,
+      severity: f.bright_ti4 > 330 ? "high" : "medium",
+      time: `${f.acq_date} ${f.acq_time}`,
+      status: "active"
+    }))
+  }, [nasaAlerts])
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-32 w-full" />)}
+        </div>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Skeleton className="h-[300px] w-full" />
+          <Skeleton className="h-[300px] w-full" />
+        </div>
+      </div>
+    )
+  }
+
+  const stats = [
+    {
+      title: "Focos Ativos (24h)",
+      value: nasaAlerts.length.toString(),
+      change: "Dados NASA FIRMS",
+      icon: AlertTriangle,
+      color: "text-warning",
+      bgColor: "bg-warning/10",
+    },
+    {
+      title: "Áreas Críticas",
+      value: nasaAlerts.filter((f: any) => f.confidence === 'h').length.toString(),
+      change: "Alta confiança satelital",
+      icon: Flame,
+      color: "text-destructive",
+      bgColor: "bg-destructive/10",
+    },
+    {
+      title: "Monitoramento INPE",
+      value: "Amazônia",
+      change: "Bioma Principal",
+      icon: MapPin,
+      color: "text-primary",
+      bgColor: "bg-primary/10",
+    },
+    {
+      title: "Status do Sistema",
+      value: "98%",
+      change: "Sensores em órbita",
+      icon: Activity,
+      color: "text-chart-3",
+      bgColor: "bg-chart-3/10",
+    },
+  ]
+
   return (
     <div className="space-y-6">
-      {/* Stats Cards */}
+      {/* Cards de Estatísticas */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat, index) => (
           <Card key={index} className="border-border/50">
@@ -115,18 +128,17 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Charts Row */}
       <div className="grid gap-6 lg:grid-cols-2">
-        {/* Alerts Timeline */}
+        {/* Gráfico de Linha do Tempo */}
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg">Alertas nas Últimas 24h</CardTitle>
-            <CardDescription>Distribuição de alertas por horário</CardDescription>
+            <CardTitle className="text-lg">Anomalias Térmicas (NASA)</CardTitle>
+            <CardDescription>Distribuição de focos por horário nas últimas 24h</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-[250px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={alertsData}>
+                <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="alertGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -134,165 +146,36 @@ export default function DashboardPage() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis 
-                    dataKey="hora" 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="alertas"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    fill="url(#alertGradient)"
-                  />
+                  <XAxis dataKey="hora" className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <YAxis className="text-xs" tick={{ fill: 'hsl(var(--muted-foreground))' }} />
+                  <Tooltip contentStyle={{ backgroundColor: 'hsl(var(--card))', border: '1px solid hsl(var(--border))' }} />
+                  <Area type="monotone" dataKey="alertas" stroke="hsl(var(--primary))" fill="url(#alertGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Weekly Stats */}
+        {/* Tabela de Alertas Recentes */}
         <Card className="border-border/50">
           <CardHeader>
-            <CardTitle className="text-lg">Resumo Semanal</CardTitle>
-            <CardDescription>Ocorrências vs. Incêndios prevenidos</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[250px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis 
-                    dataKey="dia" 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                  <Bar dataKey="ocorrencias" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} name="Ocorrências" />
-                  <Bar dataKey="prevenidos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Prevenidos" />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Bottom Row */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Alerts */}
-        <Card className="border-border/50 lg:col-span-2">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Alertas Recentes</CardTitle>
-                <CardDescription>Últimas detecções do sistema</CardDescription>
-              </div>
-              <Flame className="h-5 w-5 text-muted-foreground" />
-            </div>
+            <CardTitle className="text-lg">Focos Detectados Recentemente</CardTitle>
+            <CardDescription>Dados táticos processados do INPE/NASA</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {recentAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4"
-                >
+              {recentAlerts.length > 0 ? recentAlerts.map((alert: any) => (
+                <div key={alert.id} className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4">
                   <div className="flex items-center gap-4">
-                    <div
-                      className={`h-2 w-2 rounded-full ${
-                        alert.severity === "high"
-                          ? "bg-destructive"
-                          : alert.severity === "medium"
-                          ? "bg-warning"
-                          : "bg-primary"
-                      }`}
-                    />
+                    <div className={`h-2 w-2 rounded-full ${alert.severity === "high" ? "bg-destructive" : "bg-warning"}`} />
                     <div>
                       <p className="font-medium text-foreground">{alert.location}</p>
                       <p className="text-sm text-muted-foreground">{alert.time}</p>
                     </div>
                   </div>
-                  <Badge
-                    variant={
-                      alert.status === "active"
-                        ? "destructive"
-                        : alert.status === "investigating"
-                        ? "secondary"
-                        : "outline"
-                    }
-                    className="capitalize"
-                  >
-                    {alert.status === "active" 
-                      ? "Ativo" 
-                      : alert.status === "investigating" 
-                      ? "Investigando" 
-                      : "Resolvido"}
-                  </Badge>
+                  <Badge variant={alert.severity === "high" ? "destructive" : "secondary"}>Ativo</Badge>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Weather Widget */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg">Condições Climáticas</CardTitle>
-            <CardDescription>Dados meteorológicos atuais</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {weatherData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className={`h-5 w-5 ${item.color}`} />
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                  </div>
-                  <span className="font-semibold text-foreground">{item.value}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-lg bg-warning/10 p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Risco Elevado</p>
-                  <p className="text-xs text-muted-foreground">
-                    Condições favoráveis para incêndios nas próximas 6 horas
-                  </p>
-                </div>
-              </div>
+              )) : <p className="text-sm text-muted-foreground">Nenhum foco crítico detectado no momento.</p>}
             </div>
           </CardContent>
         </Card>
