@@ -40,12 +40,6 @@ export default function LandingPage() {
               Recursos
             </Link>
             <Link
-              href="#como-funciona"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              Como Funciona
-            </Link>
-            <Link
               href="#contato"
               className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
@@ -174,94 +168,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it Works */}
-      <section
-        id="como-funciona"
-        className="border-y border-border bg-secondary/30 py-20"
-      >
-        <div className="container mx-auto px-4">
-          <div className="mx-auto mb-16 max-w-2xl text-center">
-            <h2 className="mb-4 text-3xl font-bold text-foreground md:text-4xl">
-              Como Funciona
-            </h2>
-            <p className="text-muted-foreground">
-              Um processo simples e eficiente para proteger o meio ambiente
-            </p>
-          </div>
-
-          <div className="mx-auto grid max-w-4xl gap-8 md:grid-cols-3">
-            {[
-              {
-                step: "01",
-                title: "Instalação de Sensores",
-                description:
-                  "Dispositivos IoT são instalados estrategicamente nas áreas de monitoramento.",
-              },
-              {
-                step: "02",
-                title: "Coleta de Dados",
-                description:
-                  "Sensores captam temperatura, umidade, gases e imagens térmicas continuamente.",
-              },
-              {
-                step: "03",
-                title: "Análise e Alertas",
-                description:
-                  "IA processa os dados e emite alertas automáticos para a central e equipes de campo.",
-              },
-            ].map((item, index) => (
-              <div key={index} className="relative text-center">
-                <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary text-2xl font-bold text-primary-foreground">
-                  {item.step}
-                </div>
-                <h3 className="mb-2 text-lg font-semibold text-foreground">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  {item.description}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <Card className="mx-auto max-w-4xl border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-            <CardContent className="p-8 text-center md:p-12">
-              <h2 className="mb-4 text-2xl font-bold text-foreground md:text-3xl">
-                Pronto para proteger suas áreas florestais?
-              </h2>
-              <p className="mx-auto mb-8 max-w-xl text-muted-foreground">
-                Junte-se a centenas de organizações que já confiam no FireWatch
-                para monitoramento e prevenção de incêndios.
-              </p>
-              <div className="mb-8 flex flex-wrap items-center justify-center gap-4">
-                {["Implantação rápida", "Suporte 24/7", "Sem compromisso"].map(
-                  (item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
-                    >
-                      <CheckCircle2 className="h-4 w-4 text-primary" />
-                      <span>{item}</span>
-                    </div>
-                  ),
-                )}
-              </div>
-              <Link href="/login?tab=register">
-                <Button size="lg" className="gap-2">
-                  Começar Gratuitamente
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-
       {/* Footer */}
       <footer
         id="contato"
@@ -289,11 +195,6 @@ export default function LandingPage() {
                 <li>
                   <Link href="#recursos" className="hover:text-foreground">
                     Recursos
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#como-funciona" className="hover:text-foreground">
-                    Como Funciona
                   </Link>
                 </li>
                 <li>
