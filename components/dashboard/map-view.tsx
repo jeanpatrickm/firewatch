@@ -1,69 +1,108 @@
 "use client";
-
-import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from "react-leaflet";
-import "leaflet/dist/leaflet.css";
+import { useEffect, useRef } from "react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 
-// Correção para ícones padrão do Leaflet no Next.js
+// Corrigir ícones padrão do Leaflet
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
-  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
-  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
 });
 
-interface FocoMapa {
-  bioma: string;
-  cidade: string;
-  estado: string;
-  frp: string;
-  latitude: string;
-  longitude: string;
-  risc_fogo: string;
-  satelite: string;
+interface MapViewProps {
+  focos: any[];
 }
 
-export default function MapView({ focos }: { focos: FocoMapa[] }) {
-  // Centro aproximado do Brasil
-  const center: [number, number] = [-14.235, -51.925];
+export default function MapView({ focos }: MapViewProps) {
+  const mapRef = useRef<L.Map | null>(null);
+  const mapContainerRef = useRef<HTMLDivElement>(null);
 
-  return (
-    <div className="h-[400px] w-full rounded-md overflow-hidden border">
-      <MapContainer center={center} zoom={4} className="h-full w-full">
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        {focos.map((foco, index) => {
-          const lat = parseFloat(foco.latitude);
-          const lng = parseFloat(foco.longitude);
-          
-          if (isNaN(lat) || isNaN(lng)) return null;
+  useEffect(() => {
+    if (!mapContainerRef.current || mapRef.current) return;
 
-          // Cor baseada no risco de fogo (0 a 1)
+    // Inicializa o mapa com zIndex mais baixo
+    const map = L.map(mapContainerRef.current, {
+      center: [-15.7801, -47.9292], // Centro do Brasil
+      zoom: 4,
+      zoomControl: true,
+      attributionControl: true,
+    });
+
+    // Adiciona o tile layer
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19,
+    }).addTo(map);
+
+    mapRef.current = map;
+
+    // Adiciona os marcadores se houver focos
+    if (focos && focos.length > 0) {
+      const bounds = L.latLngBounds([]);
+      
+      focos.forEach((foco) => {
+        const lat = parseFloat(foco.latitude.trim());
+        const lng = parseFloat(foco.longitude.trim());
+
+        if (!isNaN(lat) && !isNaN(lng)) {
+          // Determina a cor do marcador baseado no risco
           const risco = parseFloat(foco.risc_fogo);
-          const color = risco > 0.7 ? "red" : risco > 0.4 ? "orange" : "yellow";
+          let markerColor = "#22c55e"; // verde padrão
+          if (risco >= 0.7) markerColor = "#ef4444"; // vermelho
+          else if (risco >= 0.4) markerColor = "#f97316"; // laranja
+          else if (risco >= 0.2) markerColor = "#eab308"; // amarelo
 
-          return (
-            <CircleMarker
-              key={index}
-              center={[lat, lng]}
-              pathOptions={{ color, fillColor: color, fillOpacity: 0.7 }}
-              radius={5}
-            >
-              <Popup>
-                <div className="text-sm">
-                  <p><strong>Cidade:</strong> {foco.cidade} - {foco.estado}</p>
-                  <p><strong>Bioma:</strong> {foco.bioma}</p>
-                  <p><strong>FRP:</strong> {foco.frp}</p>
-                  <p><strong>Risco de Fogo:</strong> {foco.risc_fogo}</p>
-                  <p><strong>Satélite:</strong> {foco.satelite}</p>
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
-      </MapContainer>
-    </div>
+          // Cria um círculo no mapa
+          const circle = L.circle([lat, lng], {
+            radius: 15000, // 15km de raio
+            color: markerColor,
+            fillColor: markerColor,
+            fillOpacity: 0.3,
+            weight: 2,
+          }).addTo(map);
+
+          // Adiciona popup com informações
+          circle.bindPopup(`
+            <div style="font-family: sans-serif;">
+              <strong>${foco.cidade}, ${foco.estado}</strong><br/>
+              <span>Bioma: ${foco.bioma}</span><br/>
+              <span>FRP: ${foco.frp} MW</span><br/>
+              <span>Risco: ${(risco * 100).toFixed(0)}%</span><br/>
+              <span>Satélite: ${foco.satelite}</span>
+            </div>
+          `);
+
+          bounds.extend([lat, lng]);
+        }
+      });
+
+      // Ajusta o zoom para mostrar todos os focos
+      if (bounds.isValid()) {
+        map.fitBounds(bounds, { padding: [50, 50] });
+      }
+    }
+
+    // Aplica z-index baixo ao container do mapa
+    if (mapContainerRef.current) {
+      mapContainerRef.current.style.zIndex = "0";
+    }
+
+    return () => {
+      if (mapRef.current) {
+        mapRef.current.remove();
+        mapRef.current = null;
+      }
+    };
+  }, [focos]);
+
+  // Força o z-index do container do mapa
+  return (
+    <div 
+      ref={mapContainerRef} 
+      className="h-[400px] w-full rounded-md" 
+      style={{ zIndex: 0 }}
+    />
   );
 }

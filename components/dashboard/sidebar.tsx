@@ -23,11 +23,11 @@ const navItems = [
     href: "/dashboard",
     icon: LayoutDashboard,
   },
-  {
-    title: "Mapa Tático",
-    href: "/dashboard/mapa",
-    icon: Map,
-  },
+  // {
+  //   title: "Mapa Tático",
+  //   href: "/dashboard/mapa",
+  //   icon: Map,
+  // },
   {
     title: "Alertas",
     href: "/dashboard/alertas",
