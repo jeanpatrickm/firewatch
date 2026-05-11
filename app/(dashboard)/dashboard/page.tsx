@@ -22,15 +22,22 @@ const MapView = dynamic(() => import("@/components/dashboard/map-view"), {
 const API_BASE_URL = "https://3qigbzusxi.execute-api.sa-east-1.amazonaws.com"; // Substitua pela sua URL
 
 function formatTimestamp(unixTimestamp: number) {
-  const date = new Date(unixTimestamp * 1000);
-  return date.toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit'
-  });
+  // Converte para milissegundos se necessário
+  const timestampMs = unixTimestamp.toString().length === 13 
+    ? unixTimestamp 
+    : unixTimestamp * 1000;
+  
+  const date = new Date(timestampMs);
+  
+  // Formatação manual para garantir o formato correto
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
 }
 
 function getRiscoFogoColor(risco: string) {
@@ -165,7 +172,7 @@ export default function DashboardPage() {
           <Card>
             <CardHeader>
               <CardTitle>Evolução por Hora</CardTitle>
-              <CardDescription>Quantidade de focos detectados nas últimas 24 horas</CardDescription>
+              <CardDescription>Quantidade de focos detectados na semana</CardDescription>
             </CardHeader>
             <CardContent className="pl-2">
               <div className="h-[150px]">
@@ -219,59 +226,60 @@ export default function DashboardPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[180px]">
-                    <div className="flex items-center gap-2">
-                      <Satellite className="h-4 w-4" />
-                      Data/Hora
-                    </div>
-                  </TableHead>
-                  <TableHead>Cidade</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Bioma</TableHead>
-                  <TableHead className="text-right">FRP (MW)</TableHead>
-                  <TableHead className="text-right">Risco de Fogo</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {dadosMapa.map((foco, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="font-medium">
-                      {formatTimestamp(foco.data_hora_exp)}
-                    </TableCell>
-                    <TableCell>{foco.cidade}</TableCell>
-                    <TableCell>{foco.estado}</TableCell>
-                    <TableCell>
-                      <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">
-                        {foco.bioma}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className="font-medium">{foco.frp}</span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getRiscoFogoColor(foco.risc_fogo)}`}>
-                        {getRiscoFogoLabel(foco.risc_fogo)}
-                      </span>
-                    </TableCell>
+          {/* Container com altura máxima e scroll */}
+          <div className="rounded-md border overflow-hidden">
+            <div className="max-h-[400px] overflow-y-auto">
+              <Table>
+                <TableHeader className="sticky top-0 bg-background z-10">
+                  <TableRow>
+                    {/* <TableHead className="w-[180px]">
+                      <div className="flex items-center gap-2">
+                        Data/Hora
+                      </div>
+                    </TableHead> */}
+                    <TableHead>Coordenadas</TableHead>
+                    <TableHead>Cidade</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Bioma</TableHead>
+                    <TableHead className="text-right">FRP (MW)</TableHead>
+                    <TableHead className="text-right">Risco de Fogo</TableHead>
+                    <TableHead className="text-right">Satélite</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {dadosMapa.map((foco, index) => (
+                    <TableRow key={index}>
+                      {/* <TableCell className="font-medium">
+                        {formatTimestamp(foco.data_hora_exp)}
+                      </TableCell> */}
+                      <TableCell>{foco.latitude.trim()}, {foco.longitude.trim()}</TableCell>
+                      <TableCell>{foco.cidade}</TableCell>
+                      <TableCell>{foco.estado}</TableCell>
+                      <TableCell>
+                        <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-semibold">
+                          {foco.bioma}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="font-medium">{foco.frp}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${getRiscoFogoColor(foco.risc_fogo)}`}>
+                          {getRiscoFogoLabel(foco.risc_fogo)}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="font-medium">
+                          {(foco.satelite)}
+                        </span>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </div>
           
-          {/* Informações do satélite e coordenadas */}
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            {dadosMapa.map((foco, index) => (
-              <div key={index} className="flex items-center gap-2 text-xs text-muted-foreground">
-                <Satellite className="h-3 w-3" />
-                <span>Satélite: {foco.satelite} | Coord: {foco.latitude.trim()}, {foco.longitude.trim()}</span>
-              </div>
-            ))}
-          </div>
         </CardContent>
       </Card>
     </div>
