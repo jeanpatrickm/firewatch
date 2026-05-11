@@ -1,302 +1,162 @@
-"use client"
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { 
-  Flame, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Activity,
-  Thermometer,
-  Droplets,
-  Wind,
-  MapPin
-} from "lucide-react"
-import { 
-  Area, 
-  AreaChart, 
-  Bar, 
-  BarChart, 
-  ResponsiveContainer, 
-  XAxis, 
-  YAxis, 
-  Tooltip,
-  CartesianGrid
-} from "recharts"
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import { Flame, Map as MapIcon, AlertTriangle } from "lucide-react";
 
-// Dados simulados
-const alertsData = [
-  { hora: "00:00", alertas: 2 },
-  { hora: "04:00", alertas: 1 },
-  { hora: "08:00", alertas: 5 },
-  { hora: "12:00", alertas: 8 },
-  { hora: "16:00", alertas: 12 },
-  { hora: "20:00", alertas: 6 },
-]
+// Importa o mapa dinamicamente para evitar erro de SSR (Server-Side Rendering)
+const MapView = dynamic(() => import("@/components/dashboard/map-view"), {
+  ssr: false,
+  loading: () => <div className="h-[400px] w-full bg-muted animate-pulse rounded-md flex items-center justify-center">Carregando mapa...</div>
+});
 
-const weeklyData = [
-  { dia: "Seg", ocorrencias: 3, prevenidos: 12 },
-  { dia: "Ter", ocorrencias: 2, prevenidos: 15 },
-  { dia: "Qua", ocorrencias: 5, prevenidos: 18 },
-  { dia: "Qui", ocorrencias: 1, prevenidos: 20 },
-  { dia: "Sex", ocorrencias: 4, prevenidos: 16 },
-  { dia: "Sáb", ocorrencias: 2, prevenidos: 14 },
-  { dia: "Dom", ocorrencias: 1, prevenidos: 10 },
-]
-
-const recentAlerts = [
-  { id: 1, location: "Setor A - Zona Norte", severity: "high", time: "5 min atrás", status: "active" },
-  { id: 2, location: "Setor C - Zona Sul", severity: "medium", time: "15 min atrás", status: "investigating" },
-  { id: 3, location: "Setor B - Zona Leste", severity: "low", time: "1 hora atrás", status: "resolved" },
-  { id: 4, location: "Setor D - Zona Oeste", severity: "medium", time: "2 horas atrás", status: "resolved" },
-]
-
-const stats = [
-  {
-    title: "Alertas Ativos",
-    value: "3",
-    change: "+2 desde ontem",
-    icon: AlertTriangle,
-    color: "text-warning",
-    bgColor: "bg-warning/10",
-  },
-  {
-    title: "Áreas Monitoradas",
-    value: "24",
-    change: "Todas operacionais",
-    icon: MapPin,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
-  },
-  {
-    title: "Incêndios Prevenidos",
-    value: "156",
-    change: "+12 este mês",
-    icon: CheckCircle2,
-    color: "text-success",
-    bgColor: "bg-success/10",
-  },
-  {
-    title: "Sensores Online",
-    value: "98%",
-    change: "486 de 496",
-    icon: Activity,
-    color: "text-chart-3",
-    bgColor: "bg-chart-3/10",
-  },
-]
-
-const weatherData = [
-  { label: "Temperatura", value: "32°C", icon: Thermometer, color: "text-chart-4" },
-  { label: "Umidade", value: "45%", icon: Droplets, color: "text-chart-3" },
-  { label: "Vento", value: "18 km/h", icon: Wind, color: "text-chart-5" },
-]
-
+const API_BASE_URL = "https://3qigbzusxi.execute-api.sa-east-1.amazonaws.com"; // Substitua pela sua URL
 export default function DashboardPage() {
+  const [dadosInfo, setDadosInfo] = useState<any>(null);
+  const [dadosMapa, setDadosMapa] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        // Faz chamadas simultâneas para os dois endpoints
+        const [resInfo, resMapa] = await Promise.all([
+          fetch(`${API_BASE_URL}/focos-diarios-info`),
+          fetch(`${API_BASE_URL}/mapa`) // ou a rota correta do mapa
+        ]);
+
+        const info = await resInfo.json();
+        const mapa = await resMapa.json();
+
+        // Transforma objetos em arrays para o Recharts (BarChart)
+        const biomasArray = Object.entries(info.biomasAfetados || {}).map(([name, value]) => ({ name, value }));
+        const estadosArray = Object.entries(info.estadosAfetados || {})
+          .map(([name, value]) => ({ name, value }))
+          .sort((a: any, b: any) => b.value - a.value)
+          .slice(0, 10); // Pega o Top 10 estados
+
+        setDadosInfo({ ...info, biomasArray, estadosArray });
+        setDadosMapa(mapa);
+      } catch (error) {
+        console.error("Erro ao buscar dados da API:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div className="p-8 flex items-center justify-center h-full">Carregando dados do Firewatch...</div>;
+  }
+
+  if (!dadosInfo) return null;
+
   return (
-    <div className="space-y-6">
-      {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, index) => (
-          <Card key={index} className="border-border/50">
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">{stat.title}</p>
-                  <p className="mt-2 text-3xl font-bold text-foreground">{stat.value}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{stat.change}</p>
-                </div>
-                <div className={`rounded-lg p-2 ${stat.bgColor}`}>
-                  <stat.icon className={`h-5 w-5 ${stat.color}`} />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+      <div className="flex items-center justify-between space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight">Visão Geral dos Focos</h2>
       </div>
 
-      {/* Charts Row */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Alerts Timeline */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg">Alertas nas Últimas 24h</CardTitle>
-            <CardDescription>Distribuição de alertas por horário</CardDescription>
+      {/* Top Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total de Focos (24h)</CardTitle>
+            <Flame className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="h-[250px]">
+            <div className="text-2xl font-bold">{dadosInfo.totalFocos}</div>
+            <p className="text-xs text-muted-foreground">Focos consolidados pelo INPE</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Principal Bioma Afetado</CardTitle>
+            <MapIcon className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {dadosInfo.biomasArray.sort((a:any, b:any) => b.value - a.value)[0]?.name || "N/A"}
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Estado mais Afetado</CardTitle>
+            <AlertTriangle className="h-4 w-4 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {dadosInfo.estadosArray[0]?.name || "N/A"}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráficos e Mapa */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        
+        {/* Gráfico Temporal */}
+        <Card className="col-span-4">
+          <CardHeader>
+            <CardTitle>Evolução por Hora</CardTitle>
+            <CardDescription>Quantidade de focos detectados nas últimas 24 horas</CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={alertsData}>
-                  <defs>
-                    <linearGradient id="alertGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis 
-                    dataKey="hora" 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
+                <LineChart data={dadosInfo.graficoHora}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
+                  <XAxis dataKey="key" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))' }}
                   />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="alertas"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={2}
-                    fill="url(#alertGradient)"
-                  />
-                </AreaChart>
+                  <Line type="monotone" dataKey="value" name="Focos" stroke="#ef4444" strokeWidth={2} dot={false} activeDot={{ r: 6 }} />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        {/* Weekly Stats */}
-        <Card className="border-border/50">
+        {/* Gráfico Biomas */}
+        <Card className="col-span-3">
           <CardHeader>
-            <CardTitle className="text-lg">Resumo Semanal</CardTitle>
-            <CardDescription>Ocorrências vs. Incêndios prevenidos</CardDescription>
+            <CardTitle>Focos por Bioma</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px]">
+            <div className="h-[350px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis 
-                    dataKey="dia" 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <YAxis 
-                    className="text-xs"
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                    axisLine={{ stroke: 'hsl(var(--border))' }}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                      color: 'hsl(var(--foreground))',
-                    }}
-                  />
-                  <Bar dataKey="ocorrencias" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} name="Ocorrências" />
-                  <Bar dataKey="prevenidos" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Prevenidos" />
+                <BarChart data={dadosInfo.biomasArray} layout="vertical" margin={{ top: 0, right: 0, left: 40, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-muted" />
+                  <XAxis type="number" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis dataKey="name" type="category" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                  <RechartsTooltip cursor={{fill: 'transparent'}} contentStyle={{ backgroundColor: 'hsl(var(--background))', borderColor: 'hsl(var(--border))' }} />
+                  <Bar dataKey="value" name="Focos" fill="#f97316" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-      </div>
 
-      {/* Bottom Row */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Alerts */}
-        <Card className="border-border/50 lg:col-span-2">
+        {/* Mapa Integrado */}
+        <Card className="col-span-7">
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Alertas Recentes</CardTitle>
-                <CardDescription>Últimas detecções do sistema</CardDescription>
-              </div>
-              <Flame className="h-5 w-5 text-muted-foreground" />
-            </div>
+            <CardTitle>Mapa de Focos de Calor</CardTitle>
+            <CardDescription>Distribuição geoespacial baseada na gravidade (Risco de Fogo)</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentAlerts.map((alert) => (
-                <div
-                  key={alert.id}
-                  className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4"
-                >
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`h-2 w-2 rounded-full ${
-                        alert.severity === "high"
-                          ? "bg-destructive"
-                          : alert.severity === "medium"
-                          ? "bg-warning"
-                          : "bg-primary"
-                      }`}
-                    />
-                    <div>
-                      <p className="font-medium text-foreground">{alert.location}</p>
-                      <p className="text-sm text-muted-foreground">{alert.time}</p>
-                    </div>
-                  </div>
-                  <Badge
-                    variant={
-                      alert.status === "active"
-                        ? "destructive"
-                        : alert.status === "investigating"
-                        ? "secondary"
-                        : "outline"
-                    }
-                    className="capitalize"
-                  >
-                    {alert.status === "active" 
-                      ? "Ativo" 
-                      : alert.status === "investigating" 
-                      ? "Investigando" 
-                      : "Resolvido"}
-                  </Badge>
-                </div>
-              ))}
-            </div>
+            <MapView focos={dadosMapa} />
           </CardContent>
         </Card>
 
-        {/* Weather Widget */}
-        <Card className="border-border/50">
-          <CardHeader>
-            <CardTitle className="text-lg">Condições Climáticas</CardTitle>
-            <CardDescription>Dados meteorológicos atuais</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {weatherData.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between rounded-lg border border-border/50 bg-secondary/30 p-4"
-                >
-                  <div className="flex items-center gap-3">
-                    <item.icon className={`h-5 w-5 ${item.color}`} />
-                    <span className="text-sm text-muted-foreground">{item.label}</span>
-                  </div>
-                  <span className="font-semibold text-foreground">{item.value}</span>
-                </div>
-              ))}
-            </div>
-            <div className="mt-4 rounded-lg bg-warning/10 p-4">
-              <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
-                <div>
-                  <p className="text-sm font-medium text-foreground">Risco Elevado</p>
-                  <p className="text-xs text-muted-foreground">
-                    Condições favoráveis para incêndios nas próximas 6 horas
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
-  )
+  );
 }
