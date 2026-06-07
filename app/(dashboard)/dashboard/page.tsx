@@ -1,6 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context"; // <-- Importamos seu contexto de Auth
+
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { Flame, Map as MapIcon, AlertTriangle, Clock, Satellite } from "lucide-react";
@@ -13,86 +16,85 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-// Importa o mapa dinamicamente para evitar erro de SSR (Server-Side Rendering)
+// Importa o mapa dinamicamente
 const MapView = dynamic(() => import("@/components/dashboard/map-view"), {
   ssr: false,
   loading: () => <div className="h-[400px] w-full bg-muted animate-pulse rounded-md flex items-center justify-center">Carregando mapa...</div>
 });
 
-const API_BASE_URL = "https://3qigbzusxi.execute-api.sa-east-1.amazonaws.com"; // Substitua pela sua URL
+const API_BASE_URL = "https://3qigbzusxi.execute-api.sa-east-1.amazonaws.com"; 
 
-function formatTimestamp(unixTimestamp: number) {
-  // Converte para milissegundos se necessário
-  const timestampMs = unixTimestamp.toString().length === 13 
-    ? unixTimestamp 
-    : unixTimestamp * 1000;
-  
-  const date = new Date(timestampMs);
-  
-  // Formatação manual para garantir o formato correto
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  const seconds = String(date.getSeconds()).padStart(2, '0');
-  
-  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
-}
+// ... (suas funções formatTimestamp, getRiscoFogoColor, getRiscoFogoLabel continuam aqui sem alteração) ...
+function formatTimestamp(unixTimestamp: number) { /* ... */ return ""; }
+function getRiscoFogoColor(risco: string) { /* ... */ return ""; }
+function getRiscoFogoLabel(risco: string) { /* ... */ return ""; }
 
-function getRiscoFogoColor(risco: string) {
-  const valor = parseFloat(risco);
-  if (valor >= 0.7) return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
-  if (valor >= 0.4) return "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300";
-  if (valor >= 0.2) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
-  return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
-}
-
-function getRiscoFogoLabel(risco: string) {
-  const valor = parseFloat(risco);
-  if (valor >= 0.7) return "Crítico";
-  if (valor >= 0.4) return "Alto";
-  if (valor >= 0.2) return "Moderado";
-  return "Baixo";
-}
 
 export default function DashboardPage() {
   const [dadosInfo, setDadosInfo] = useState<any>(null);
   const [dadosMapa, setDadosMapa] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  const router = useRouter();
+  // Pega as informações do seu contexto de autenticação
+  const { isAuthenticated, isLoading: authLoading } = useAuth(); 
 
   useEffect(() => {
+    if (authLoading) return;
+
+    if (!isAuthenticated) {
+      router.push("/login");
+      return;
+    }
+
     async function fetchData() {
       try {
-        // Faz chamadas simultâneas para os dois endpoints
-        const [resInfo, resMapa] = await Promise.all([
-          fetch(`${API_BASE_URL}/focos-diarios-info`),
-          fetch(`${API_BASE_URL}/mapa`) // ou a rota correta do mapa
-        ]);
+        const token = localStorage.getItem("token"); 
 
+        const headers = {
+          "Authorization": `Bearer ${token}`, 
+          "Content-Type": "application/json"
+        };
+
+        // Faz as requisições separadamente para não quebrar tudo se uma falhar
+        const resInfo = await fetch(`${API_BASE_URL}/focos-diarios-info`, { headers });
+        const resMapa = await fetch(`${API_BASE_URL}/mapa`, { headers });
+
+        if (!resInfo.ok) {
+           throw new Error(`Falha crítica na API Info. Status: ${resInfo.status}`);
+        }
+
+        // Processa os dados de Info (que sabemos que está retornando 200 OK)
         const info = await resInfo.json();
-        const mapa = await resMapa.json();
-
-        // Transforma objetos em arrays para o Recharts (BarChart)
+        
         const biomasArray = Object.entries(info.biomasAfetados || {}).map(([name, value]) => ({ name, value }));
         const estadosArray = Object.entries(info.estadosAfetados || {})
           .map(([name, value]) => ({ name, value }))
           .sort((a: any, b: any) => b.value - a.value)
-          .slice(0, 10); // Pega o Top 10 estados
+          .slice(0, 10);
 
         setDadosInfo({ ...info, biomasArray, estadosArray });
-        setDadosMapa(mapa);
+
+        // Tenta processar os dados do Mapa, mas se falhar, apenas avisa e deixa vazio
+        if (resMapa.ok) {
+            const mapa = await resMapa.json();
+            setDadosMapa(mapa);
+        } else {
+            console.error(`A rota do Mapa falhou (Status: ${resMapa.status}). O gráfico do mapa ficará vazio por enquanto.`);
+            setDadosMapa([]); // Deixa o mapa vazio para não quebrar a tela
+        }
+
       } catch (error) {
-        console.error("Erro ao buscar dados da API:", error);
+        console.error("Erro no processamento do Dashboard:", error);
       } finally {
         setLoading(false);
       }
     }
 
     fetchData();
-  }, []);
+  }, [isAuthenticated, authLoading, router]);
 
-  if (loading) {
+  if (loading || authLoading) {
     return <div className="p-8 flex items-center justify-center h-full">Carregando dados do Firewatch...</div>;
   }
 

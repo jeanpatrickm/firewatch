@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
+// @ts-ignore
 import "leaflet/dist/leaflet.css";
 
 // Corrigir ícones padrão do Leaflet

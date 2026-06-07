@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AuthProvider } from '@/contexts/auth-context'
+// @ts-ignore: allow side-effect import of global CSS without type declarations
 import './globals.css'
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -37,7 +38,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
-      <body className={`${inter.variable} font-sans antialiased`}>
+      <body 
+        className={`${inter.variable} font-sans antialiased`}
+        suppressHydrationWarning // <-- Adicione esta linha
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
