@@ -23,16 +23,16 @@ const navItems = [
     href: "/dashboard",
     icon: LayoutDashboard,
   },
-  {
-    title: "Mapa Tático",
-    href: "/dashboard/mapa",
-    icon: Map,
-  },
-  {
-    title: "Alertas",
-    href: "/dashboard/alertas",
-    icon: Bell,
-  },
+  // {
+  //   title: "Mapa Tático",
+  //   href: "/dashboard/mapa",
+  //   icon: Map,
+  // },
+  // {
+  //   title: "Alertas",
+  //   href: "/dashboard/alertas",
+  //   icon: Bell,
+  // },
   {
     title: "Configurações",
     href: "/dashboard/configuracoes",
@@ -104,8 +104,8 @@ export function DashboardSidebar() {
       <div className="border-t border-sidebar-border p-3">
         {!collapsed && user && (
           <div className="mb-3 rounded-lg bg-sidebar-accent/50 p-3">
-            <p className="text-sm font-medium text-sidebar-foreground">{user.name}</p>
-            <p className="text-xs text-sidebar-foreground/60">{user.email}</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{user.email}</p>
+            {/* <p className="text-xs text-sidebar-foreground/60">{user.email}</p> */}
           </div>
         )}
         <Button

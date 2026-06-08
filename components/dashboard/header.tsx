@@ -25,7 +25,7 @@ export function DashboardHeader() {
 
       <div className="flex items-center gap-4">
         {/* Search */}
-        <div className="relative hidden md:block">
+        {/* <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             type="search"
@@ -33,7 +33,7 @@ export function DashboardHeader() {
             className="w-64 pl-9"
             aria-label="Buscar no sistema"
           />
-        </div>
+        </div> */}
 
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative" aria-label="Notificações">

@@ -131,7 +131,7 @@ export default function LoginPage() {
                     <Label htmlFor="login-email">Email</Label>
                     <Input
                       id="login-email"
-                      type="email"
+                      type="text"
                       placeholder="seu@email.com"
                       value={loginEmail}
                       onChange={(e) => setLoginEmail(e.target.value)}
@@ -201,7 +201,7 @@ export default function LoginPage() {
                     <Label htmlFor="register-email">Email</Label>
                     <Input
                       id="register-email"
-                      type="email"
+                      type="text"
                       placeholder="seu@email.com"
                       value={registerEmail}
                       onChange={(e) => setRegisterEmail(e.target.value)}
