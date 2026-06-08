@@ -104,8 +104,8 @@ export function DashboardSidebar() {
       <div className="border-t border-sidebar-border p-3">
         {!collapsed && user && (
           <div className="mb-3 rounded-lg bg-sidebar-accent/50 p-3">
-            <p className="text-sm font-medium text-sidebar-foreground">{user.name}</p>
-            <p className="text-xs text-sidebar-foreground/60">{user.email}</p>
+            <p className="text-sm font-medium text-sidebar-foreground">{user.email}</p>
+            {/* <p className="text-xs text-sidebar-foreground/60">{user.email}</p> */}
           </div>
         )}
         <Button
