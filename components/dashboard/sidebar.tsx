@@ -28,11 +28,11 @@ const navItems = [
   //   href: "/dashboard/mapa",
   //   icon: Map,
   // },
-  {
-    title: "Alertas",
-    href: "/dashboard/alertas",
-    icon: Bell,
-  },
+  // {
+  //   title: "Alertas",
+  //   href: "/dashboard/alertas",
+  //   icon: Bell,
+  // },
   {
     title: "Configurações",
     href: "/dashboard/configuracoes",
