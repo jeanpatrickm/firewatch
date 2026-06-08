@@ -24,10 +24,40 @@ const MapView = dynamic(() => import("@/components/dashboard/map-view"), {
 
 const API_BASE_URL = "https://3qigbzusxi.execute-api.sa-east-1.amazonaws.com"; 
 
-// ... (suas funções formatTimestamp, getRiscoFogoColor, getRiscoFogoLabel continuam aqui sem alteração) ...
-function formatTimestamp(unixTimestamp: number) { /* ... */ return ""; }
-function getRiscoFogoColor(risco: string) { /* ... */ return ""; }
-function getRiscoFogoLabel(risco: string) { /* ... */ return ""; }
+function formatTimestamp(unixTimestamp: number) {
+  // Converte para milissegundos se necessário
+  const timestampMs = unixTimestamp.toString().length === 13 
+    ? unixTimestamp 
+    : unixTimestamp * 1000;
+  
+  const date = new Date(timestampMs);
+  
+  // Formatação manual para garantir o formato correto
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  
+  return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+}
+
+function getRiscoFogoColor(risco: string) {
+  const valor = parseFloat(risco);
+  if (valor >= 0.8) return "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300";
+  if (valor >= 0.6) return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300";
+  if (valor >= 0.3) return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300";
+  return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300";
+}
+
+function getRiscoFogoLabel(risco: string) {
+  const valor = parseFloat(risco);
+  if (valor >= 0.8) return "Crítico";
+  if (valor >= 0.6) return "Alto";
+  if (valor >= 0.3) return "Moderado";
+  return "Baixo";
+}
 
 
 export default function DashboardPage() {

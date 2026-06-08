@@ -50,14 +50,17 @@ export default function MapView({ focos }: MapViewProps) {
         if (!isNaN(lat) && !isNaN(lng)) {
           // Determina a cor do marcador baseado no risco
           const risco = parseFloat(foco.risc_fogo);
-          let markerColor = "#22c55e"; // verde padrão
-          if (risco >= 0.7) markerColor = "#ef4444"; // vermelho
-          else if (risco >= 0.4) markerColor = "#f97316"; // laranja
-          else if (risco >= 0.2) markerColor = "#eab308"; // amarelo
-
+          let markerColor = "#22c55e"; // verde (risco < 0.3)
+          if (risco >= 0.8) {
+            markerColor = "#a855f7"; // roxo
+          } else if (risco >= 0.6) {
+            markerColor = "#ef4444"; // vermelho
+          } else if (risco >= 0.3) {
+            markerColor = "#eab308"; // amarelo
+          }
           // Cria um círculo no mapa
           const circle = L.circle([lat, lng], {
-            radius: 15000, // 15km de raio
+            radius: 15000,
             color: markerColor,
             fillColor: markerColor,
             fillOpacity: 0.3,
